@@ -1,0 +1,71 @@
+base:
+  wandb_project: "hi_fi"
+  model_name: "hifi_gan"
+  data_dir: "./data/"
+  checkpoint_dir: "./checkpoints/"
+  #dirs and other
+
+preprocessing:
+    sr: 22050
+    win_length: 1024
+    hop_length: 256
+    n_fft:  1024
+    f_min:  0
+    f_max: 8000
+    n_mels: 80
+    power: 1.0
+
+dataset:
+  bs: 1
+  limit: 1
+  shuffle: False
+  num_workers: 0
+  drop_last: False
+model:
+  #generator
+  upsample_kernel_sizes:
+    - 16
+    - 16
+    - 4
+    - 4
+  upsample_first: 512
+  kernels:
+    - 3 
+    - 7 
+    - 11
+  dilations: 
+    -
+      - 1
+      - 3
+      - 5
+    -
+      - 1
+      - 3
+      - 5
+    -
+      - 1
+      - 3
+      - 5
+  #MSD
+  #MPD
+  periods: 
+    - 2
+    - 3
+    - 5
+    - 7
+    - 11
+
+loss:
+  lambda_mel: 45
+  lambda_fmap: 2
+
+
+training:
+  device: 'cpu'
+  epochs: 100
+  d_learning_rate: 0.0002
+  g_learning_rate: 0.0002
+  weight_decay: 0.01
+  log_steps: 2
+  save_steps: 5000
+  grad_clip: 1000
