@@ -30,7 +30,7 @@ model:
     - 16
     - 4
     - 4
-  upsample_first: 128
+  upsample_first: 512
   kernels:
     - 3 
     - 7 

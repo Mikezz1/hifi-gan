@@ -236,6 +236,7 @@ class Trainer:
     def save_checkpoint(
         self, generator, MPD, MSD, optimizer_g, optimizer_d, path, model_name, step
     ):
+        os.makedirs(path, exist_ok=True)
         torch.save(
             {
                 "generator": generator.state_dict(),

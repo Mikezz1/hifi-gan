@@ -35,33 +35,41 @@ class GeneratorLoss:
             mpd_loss += torch.mean((output - 1) ** 2)
 
         for fmap_fake, fmap_real in zip(mpd_fmap_fake, mpd_fmap_real):
-            l = torch.mean(
-                torch.Tensor(
-                    [
-                        l1_loss(fmap_f, fmap_r)
-                        for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
-                    ]
-                )
-            )
-            feature_loss_mpd += l
-        feature_loss_mpd = feature_loss_mpd / len(mpd_fmap_fake)
+            for fmap_layer_f, fmap_layer_r in zip(fmap_fake, fmap_real):
+                feature_loss_mpd += l1_loss(fmap_layer_f, fmap_layer_r)
+
+        for fmap_fake, fmap_real in zip(msd_fmap_fake, msd_fmap_real):
+            for fmap_layer_f, fmap_layer_r in zip(fmap_fake, fmap_real):
+                feature_loss_msd += l1_loss(fmap_layer_f, fmap_layer_r)
+
+        # for fmap_fake, fmap_real in zip(mpd_fmap_fake, mpd_fmap_real):
+        #     l = torch.mean(
+        #         torch.Tensor(
+        #             [
+        #                 l1_loss(fmap_f, fmap_r)
+        #                 for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
+        #             ]
+        #         )
+        #     )
+        #     feature_loss_mpd += l
+        # feature_loss_mpd = feature_loss_mpd / len(mpd_fmap_fake)
 
         # msd
         for output in msd_out_fake:
             msd_loss += torch.mean((output - 1) ** 2)
 
-        for fmap_fake, fmap_real in zip(msd_fmap_fake, msd_fmap_real):
-            l = torch.mean(
-                torch.Tensor(
-                    [
-                        l1_loss(fmap_f, fmap_r)
-                        for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
-                    ]
-                )
-            )
-            feature_loss_msd += l
+        # for fmap_fake, fmap_real in zip(msd_fmap_fake, msd_fmap_real):
+        #     l = torch.mean(
+        #         torch.Tensor(
+        #             [
+        #                 l1_loss(fmap_f, fmap_r)
+        #                 for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
+        #             ]
+        #         )
+        #     )
+        #     feature_loss_msd += l
 
-        feature_loss_msd = feature_loss_msd / len(msd_fmap_fake)
+        # feature_loss_msd = feature_loss_msd / len(msd_fmap_fake)
 
         # mel loss
         mel_loss = l1_loss(mels_fake, mels_true)
@@ -105,8 +113,6 @@ class DiscriminatorLoss:
             mpd_loss = mpd_loss + torch.mean((output_real - 1) ** 2 + output_fake**2)
 
         for output_fake, output_real in zip(msd_out_fake, msd_out_real):
-            output_real = output_real.flatten()
-            output_fake = output_fake.flatten()
 
             l = torch.mean((output_real - 1) ** 2 + output_fake**2)
             msd_loss = msd_loss + l
