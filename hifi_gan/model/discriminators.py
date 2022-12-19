@@ -71,6 +71,7 @@ class ScaleDiscriminator(nn.Module):
                 )
             ]
         )
+        self.convs.apply(weights_init)
         self.out = self.norm(nn.Conv1d(1024, 1, 3, 1, padding=1))
 
     def forward(self, x):
@@ -176,6 +177,7 @@ class SubMPD(nn.Module):
                 in_channels=1024, out_channels=1, kernel_size=(3, 1), padding=(1, 0)
             ),
         )
+        self.convs.apply(weights_init)
 
     def forward(self, x):
         """May also need to return convs from out module

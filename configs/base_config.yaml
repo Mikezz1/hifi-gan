@@ -7,9 +7,9 @@ base:
 
 preprocessing:
     sr: 22050
-    win_length: 1023
+    win_length: 1024
     hop_length: 256
-    n_fft:  1023
+    n_fft:  1024
     f_min:  0
     f_max: 8000
     n_mels: 80
@@ -19,6 +19,7 @@ preprocessing:
 dataset:
   bs: 16
   limit: null
+  batch_overfit: False
   shuffle: True
   num_workers: 0
   drop_last: False
@@ -70,3 +71,4 @@ training:
   log_steps: 20
   save_steps: 600
   grad_clip: 10000
+  gamma: 0.99

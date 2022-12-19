@@ -100,6 +100,14 @@ if __name__ == "__main__":
     #     "pct_start": 0.1
     # })
 
+    scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
+        optimizer_g, config["training"]["gamma"]
+    )
+
+    scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
+        optimizer_d, config["training"]["gamma"]
+    )
+
     # scheduler_d = OneCycleLR(optimizer_d, **{
     #     "steps_per_epoch": len(dataloader),
     #     "epochs": config['training']['epochs'],
@@ -128,6 +136,8 @@ if __name__ == "__main__":
         generator_loss,
         melspec_transform,
         logger,
+        scheduler_d,
+        scheduler_g,
     )
 
     trainer.train()

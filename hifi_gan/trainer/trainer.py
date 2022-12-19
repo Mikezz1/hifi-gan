@@ -154,7 +154,7 @@ class Trainer:
                         grad_norm_g,
                         grad_norm_mpd,
                         grad_norm_msd,
-                        # self.scheduler.get_lr()[0],
+                        self.scheduler_g.get_last_lr(),
                     )
 
                 if step % self.config["training"]["save_steps"] == 0:
@@ -169,7 +169,10 @@ class Trainer:
                         step,
                     )
 
-                # return generator, msd, mpd
+            self.scheduler_g.step()
+            self.scheduler_d.step()
+
+            # return generator, msd, mpd
 
     def log_everything(
         self,
@@ -189,7 +192,7 @@ class Trainer:
         grad_norm_g,
         grad_norm_mpd,
         grad_norm_msd,
-        # learning_rate,
+        learning_rate,
     ):
         self.logger.add_scalar("step", step)
         self.logger.add_scalar("epoch", epoch)
@@ -200,7 +203,7 @@ class Trainer:
         self.logger.add_scalar("feature_loss_msd", feature_loss_msd.detach().item())
         self.logger.add_scalar("msd_loss", msd_loss.detach().item())
         self.logger.add_scalar("mpd_loss", mpd_loss.detach().item())
-        # self.logger.add_scalar("learning_rate", learning_rate)
+        self.logger.add_scalar("learning_rate_g", learning_rate)
         self.logger.add_scalar("grad_norm_g", grad_norm_g)
         self.logger.add_scalar("grad_norm_msd", grad_norm_msd)
         self.logger.add_scalar("grad_norm_mpd", grad_norm_mpd)

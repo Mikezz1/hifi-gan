@@ -55,8 +55,7 @@ class MelSpectrogram(nn.Module):
         :param audio: Expected shape is [B, T]
         :return: Shape is [B, n_mels, T']
         """
-
-        mel = self.mel_spectrogram(audio).clamp_(min=1e-5).log_()
+        mel = self.mel_spectrogram(audio[..., :-1]).clamp_(min=1e-5).log_()
 
         # print(
         #     f'len / hop_len: {audio.size(1) /self.config["preprocessing"]["hop_length"]}'

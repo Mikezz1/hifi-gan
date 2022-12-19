@@ -8,6 +8,7 @@ import torchaudio
 from torch import Tensor
 from torch.utils.data import Dataset
 from hifi_gan.utils.preprocessing import MelSpectrogram
+from librosa.util import normalize
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +58,13 @@ class BaseDataset(Dataset):
         return len(self._index)
 
     def load_audio(self, path):
-        audio_tensor, sr = torchaudio.load(path)
+        audio_tensor, sr = torchaudio.load(path, normalize=True)
+        audio_tensor = 0.95 * audio_tensor
+
         # remove all channels but the first
         audio_tensor = audio_tensor[0:1, :]
 
         # pad audio to get round melspec size
-        # print(f" 1 : {audio_tensor.size()}")
         audio_tensor = self.crop_audio(audio_tensor)
         # print(audio_tensor.size())
         # audio_tensor = self.adjust_audio_len(audio_tensor)
@@ -77,7 +79,11 @@ class BaseDataset(Dataset):
         ss = self.config_parser["preprocessing"]["segment_size"]
         if audio.size(1) >= ss:
             max_audio_start = audio.size(1) - ss
-            audio_start = random.randint(0, max_audio_start)
+            audio_start = (
+                random.randint(0, max_audio_start)
+                if not self.config_parser["dataset"]["batch_overfit"]
+                else 100
+            )
             audio = audio[:, audio_start : audio_start + ss]
         else:
             audio = torch.nn.functional.pad(

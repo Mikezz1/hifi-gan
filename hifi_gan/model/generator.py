@@ -5,6 +5,12 @@ import torch.nn
 from torch.nn.utils import weight_norm
 
 
+def init_weights(m, mean=0.0, std=0.01):
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        m.weight.data.normal_(mean, std)
+
+
 class Generator(nn.Module):
     """_summary_
 
@@ -20,6 +26,7 @@ class Generator(nn.Module):
         self.conv1 = self.norm(
             nn.Conv1d(80, self.initial_ch, kernel_size=7, dilation=1, padding=3)
         )
+        self.conv1.apply(init_weights)
         self.conv2 = self.norm(
             nn.Conv1d(
                 self.initial_ch // 2 ** (len(k_u)),
@@ -29,6 +36,7 @@ class Generator(nn.Module):
                 padding=3,
             )
         )
+        self.conv2.apply(init_weights)
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
@@ -53,6 +61,7 @@ class Generator(nn.Module):
                 for i in range(len(k_u))
             )
         )
+        self.upsampling.apply(init_weights)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -116,6 +125,7 @@ class ResBlock(nn.Module):
                     ),
                 )
             )
+        self.convs.apply(init_weights)
 
     def forward(self, x):
         for layer in self.convs:
