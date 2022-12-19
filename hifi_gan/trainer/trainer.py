@@ -42,17 +42,24 @@ class Trainer:
         self,
     ):
         step = 0
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         for epoch in range(self.config["training"]["epochs"]):
             for batch in tqdm(self.dataloader):
                 step += 1
                 self.logger.set_step(step)
 
-                mels = batch["mels"].to(self.config["training"]["device"])
-                wavs = batch["wavs"].to(self.config["training"]["device"])
+                mels = batch["mels"].to(device)
+                wavs = batch["wavs"].to(device)
 
                 self.optimizer_d.zero_grad()
-                with torch.no_grad():
-                    fake_wav = self.generator(mels)[:, :, :-256]
+                fake_wav = self.generator(mels)
+
+                # print(wavs.size(2))
+                # print(fake_wav.size(2))
+
+                assert fake_wav.size(2) == wavs.size(2)
 
                 # MSD
                 msd_out_real, _ = self.MSD(wavs)  # List(Tensor)
@@ -91,7 +98,7 @@ class Trainer:
                 # move to generator
                 self.optimizer_g.zero_grad()
 
-                fake_wav = self.generator(mels)[:, :, :-256]
+                fake_wav = self.generator(mels)
 
                 msd_out_fake, msd_fmap_fake = self.MSD(fake_wav)
                 msd_out_real, msd_fmap_real = self.MSD(fake_wav)

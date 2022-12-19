@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from typing import List
 import torch.nn
+from torch.nn.utils import weight_norm
 
 
 class Generator(nn.Module):
@@ -15,11 +16,18 @@ class Generator(nn.Module):
     def __init__(self, k_u, upsample_first, kernels, dilation):
         super(Generator, self).__init__()
         self.initial_ch = upsample_first
-        self.conv1 = nn.Conv1d(
-            80, self.initial_ch, kernel_size=7, dilation=1, padding=3
+        self.norm = weight_norm
+        self.conv1 = self.norm(
+            nn.Conv1d(80, self.initial_ch, kernel_size=7, dilation=1, padding=3)
         )
-        self.conv2 = nn.Conv1d(
-            self.initial_ch // 2 ** (len(k_u)), 1, kernel_size=7, dilation=1, padding=3
+        self.conv2 = self.norm(
+            nn.Conv1d(
+                self.initial_ch // 2 ** (len(k_u)),
+                1,
+                kernel_size=7,
+                dilation=1,
+                padding=3,
+            )
         )
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
@@ -27,12 +35,14 @@ class Generator(nn.Module):
         self.upsampling = nn.Sequential(
             *list(
                 nn.Sequential(
-                    nn.ConvTranspose1d(
-                        self.initial_ch // (2**i),
-                        self.initial_ch // (2 ** (i + 1)),
-                        kernel_size=k_u[i],
-                        stride=k_u[i] // 2,
-                        padding=(k_u[i] - (k_u[i] // 2)) // 2,
+                    self.norm(
+                        nn.ConvTranspose1d(
+                            self.initial_ch // (2**i),
+                            self.initial_ch // (2 ** (i + 1)),
+                            kernel_size=k_u[i],
+                            stride=k_u[i] // 2,
+                            padding=(k_u[i] - (k_u[i] // 2)) // 2,
+                        )
                     ),
                     MRF(
                         kernels,
@@ -73,32 +83,36 @@ class MRF(nn.Module):
         output = self.resblocks[0](x)
         for resblock in self.resblocks[1:]:
             output = output + resblock(x)
-            # print(output.size())
-        return output
+        return output / 3
 
 
 class ResBlock(nn.Module):
     def __init__(self, channels, kernel_size, dilation):
         super(ResBlock, self).__init__()
         self.convs = nn.ModuleList()
+        self.norm = weight_norm
         for i in range(len(dilation)):
             self.convs.append(
                 nn.Sequential(
                     nn.LeakyReLU(),
-                    nn.Conv1d(
-                        channels,
-                        channels,
-                        kernel_size=kernel_size,
-                        dilation=dilation[i],
-                        padding=int((kernel_size * dilation[i] - dilation[i]) / 2),
+                    self.norm(
+                        nn.Conv1d(
+                            channels,
+                            channels,
+                            kernel_size=kernel_size,
+                            dilation=dilation[i],
+                            padding=int((kernel_size * dilation[i] - dilation[i]) / 2),
+                        )
                     ),
                     nn.LeakyReLU(),
-                    nn.Conv1d(
-                        channels,
-                        channels,
-                        kernel_size=kernel_size,
-                        dilation=1,
-                        padding=int((kernel_size * 1 - 1) / 2),
+                    self.norm(
+                        nn.Conv1d(
+                            channels,
+                            channels,
+                            kernel_size=kernel_size,
+                            dilation=1,
+                            padding=int((kernel_size * 1 - 1) / 2),
+                        )
                     ),
                 )
             )

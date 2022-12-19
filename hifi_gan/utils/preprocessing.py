@@ -58,4 +58,9 @@ class MelSpectrogram(nn.Module):
 
         mel = self.mel_spectrogram(audio).clamp_(min=1e-5).log_()
 
+        # print(
+        #     f'len / hop_len: {audio.size(1) /self.config["preprocessing"]["hop_length"]}'
+        # )
+        # print(f"mel: {mel.size()}")
+
         return mel

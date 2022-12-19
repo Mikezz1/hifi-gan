@@ -64,7 +64,9 @@ class BaseDataset(Dataset):
         # pad audio to get round melspec size
         # print(f" 1 : {audio_tensor.size()}")
         audio_tensor = self.crop_audio(audio_tensor)
-        audio_tensor = self.adjust_audio_len(audio_tensor)
+        # print(audio_tensor.size())
+        # audio_tensor = self.adjust_audio_len(audio_tensor)
+        # print(audio_tensor.size())
 
         target_sr = self.config_parser["preprocessing"]["sr"]
         if sr != target_sr:

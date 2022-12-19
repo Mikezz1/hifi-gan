@@ -7,9 +7,9 @@ base:
 
 preprocessing:
     sr: 22050
-    win_length: 1024
+    win_length: 1023
     hop_length: 256
-    n_fft:  1024
+    n_fft:  1023
     f_min:  0
     f_max: 8000
     n_mels: 80
@@ -63,10 +63,10 @@ loss:
 
 training:
   device: 'cpu'
-  epochs: 100
+  epochs: 200
   d_learning_rate: 0.0002
   g_learning_rate: 0.0002
   weight_decay: 0.01
   log_steps: 2
   save_steps: 1000
-  grad_clip: 1000
+  grad_clip: 10000

@@ -33,7 +33,5 @@ def collate_fn(dataset_items: List[dict]):
     result_batch = {
         "wavs": audio,
         "mels": spectrogram,
-        "spectrogram_length": spectrogram_length,
-        "audio_path": audio_path,
     }
     return result_batch

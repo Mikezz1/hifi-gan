@@ -138,7 +138,7 @@ class SubMPD(nn.Module):
                         out_channels=2 ** (5),
                         kernel_size=(5, 1),
                         stride=(3, 1),
-                        padding=((5 * 1 - 1) // 2, 0),
+                        padding=(2, 0),
                     )
                 ),
                 nn.LeakyReLU(),

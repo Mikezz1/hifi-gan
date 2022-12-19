@@ -63,9 +63,6 @@ class GeneratorLoss:
 
         feature_loss_msd = feature_loss_msd / len(msd_fmap_fake)
 
-        # print(feature_loss_msd)
-        # print(feature_loss_mpd)
-
         # mel loss
         mel_loss = l1_loss(mels_fake, mels_true)
 
@@ -91,7 +88,7 @@ class GeneratorLoss:
 
 class DiscriminatorLoss:
     def __init__(self):
-        pass
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __call__(
         self,
@@ -101,12 +98,10 @@ class DiscriminatorLoss:
         mpd_out_real: List[torch.Tensor],
     ):
 
-        msd_loss = torch.Tensor([0])
-        mpd_loss = torch.Tensor([0])
+        msd_loss = torch.Tensor([0]).to(self.device)
+        mpd_loss = torch.Tensor([0]).to(self.device)
 
         for output_fake, output_real in zip(mpd_out_fake, mpd_out_real):
-            # print(output_fake.size())
-            # print(output_real.size())
             mpd_loss = mpd_loss + torch.mean((output_real - 1) ** 2 + output_fake**2)
 
         for output_fake, output_real in zip(msd_out_fake, msd_out_real):
@@ -114,8 +109,6 @@ class DiscriminatorLoss:
             output_fake = output_fake.flatten()
 
             l = torch.mean((output_real - 1) ** 2 + output_fake**2)
-            # print(l.size())
-            # print(msd_loss.size())
             msd_loss = msd_loss + l
 
         return (msd_loss + mpd_loss) / 2
