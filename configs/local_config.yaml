@@ -17,9 +17,9 @@ preprocessing:
     segment_size: 8192
 
 dataset:
-  bs: 16
-  limit: null
-  shuffle: True
+  bs: 1
+  limit: 1
+  shuffle: False
   num_workers: 0
   drop_last: False
 model:
@@ -64,9 +64,9 @@ loss:
 training:
   device: 'cpu'
   epochs: 100
-  d_learning_rate: 0.00002
+  d_learning_rate: 0.0002
   g_learning_rate: 0.0002
   weight_decay: 0.01
   log_steps: 2
-  save_steps: 1
-  grad_clip: 10
+  save_steps: 1000
+  grad_clip: 1000

@@ -43,7 +43,9 @@ if __name__ == "__main__":
     with open(args.config) as f:
         config = yaml.safe_load(f)
 
-    melspec_transform = MelSpectrogram(config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    melspec_transform = MelSpectrogram(config).to(device)
 
     dataset = LJspeechDataset(
         config_parser=config, part="train", data_dir=config["base"]["data_dir"]
@@ -65,6 +67,14 @@ if __name__ == "__main__":
     )
     MSD = MSD()
     MPD = MPD(config["model"]["periods"])  # [2, 3, 5, 7, 11]
+
+    generator = generator.to(device)
+    MSD = MSD.to(device)
+    MPD = MPD.to(device)
+
+    # print(sum(p.numel() for p in generator.parameters()))
+    # print(sum(p.numel() for p in MSD.parameters()))
+    # print(sum(p.numel() for p in MPD.parameters()))
 
     optimizer_g = torch.optim.AdamW(
         generator.parameters(),

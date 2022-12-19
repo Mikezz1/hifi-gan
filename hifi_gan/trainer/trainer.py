@@ -3,6 +3,7 @@ import torch.nn as nn
 import PIL
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
+import os
 from hifi_gan.logger.utils import plot_spectrogram_to_buf
 
 
@@ -53,24 +54,19 @@ class Trainer:
                 with torch.no_grad():
                     fake_wav = self.generator(mels)[:, :, :-256]
 
-                # print(f"fake wav: {fake_wav.size()}")
-                # fake_wav = self.adjust_audio_len(fake_wav)
-                # print(f"fake wav: {fake_wav.size()}")
-                # print(f"true wav: {wavs[0].size()}")
-
                 # MSD
                 msd_out_real, _ = self.MSD(wavs)  # List(Tensor)
                 msd_out_fake, _ = self.MSD(fake_wav)  # List(Tensor)
-
-                # print(f"MSD fake: {msd_out_fake[0].size()}")
-                # print(f"MSD real: {msd_out_real[0].size()}")
 
                 # MPD
                 mpd_out_real, _ = self.MPD(wavs)  # List(Tensor), List(Tensor)
                 mpd_out_fake, _ = self.MPD(fake_wav)  # List(Tensor), List(Tensor)
 
-                # print(f"MPD fake: {mpd_out_fake[0].size()}")
-                # print(f"MPD real: {mpd_out_real[0].size()}")
+                # print("-" * 10)
+                # print(fake_wav.size(), wavs.size())
+                # print(msd_out_fake.size(), msd_out_real.size())
+                # print(mpd_out_fake.size(), mpd_out_real.size())
+                # print("-" * 10)
 
                 # should iterate over msd / mpd outputs, calc loss and add it with given weights
                 d_total_loss = self.discriminator_loss(
@@ -133,8 +129,6 @@ class Trainer:
                     grad_norm_g = self.get_grad_norm(self.generator)
                     grad_norm_mpd = self.get_grad_norm(self.MPD)
                     grad_norm_msd = self.get_grad_norm(self.MSD)
-                    print(g_total_loss)
-                    print(d_total_loss)
 
                     self.log_everything(
                         step,

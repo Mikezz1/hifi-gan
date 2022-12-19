@@ -22,11 +22,13 @@ class GeneratorLoss:
         mels_fake: torch.Tensor,
     ):
 
-        loss = torch.Tensor([0])
-        mpd_loss = torch.Tensor([0])
-        msd_loss = torch.Tensor([0])
-        feature_loss_mpd = torch.Tensor([0])
-        feature_loss_msd = torch.Tensor([0])
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        loss = torch.Tensor([0]).to(device)
+        mpd_loss = torch.Tensor([0]).to(device)
+        msd_loss = torch.Tensor([0]).to(device)
+        feature_loss_mpd = torch.Tensor([0]).to(device)
+        feature_loss_msd = torch.Tensor([0]).to(device)
 
         # mpd
         for output in mpd_out_fake:

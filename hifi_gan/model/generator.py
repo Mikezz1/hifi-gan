@@ -27,7 +27,6 @@ class Generator(nn.Module):
         self.upsampling = nn.Sequential(
             *list(
                 nn.Sequential(
-                    nn.ReLU(),
                     nn.ConvTranspose1d(
                         self.initial_ch // (2**i),
                         self.initial_ch // (2 ** (i + 1)),
@@ -46,12 +45,9 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
-        # print("Generator")
         x = self.conv1(x)
-        # print(x.size())
         x = self.upsampling(x)
         x = self.tanh(self.conv2(x))
-        # print("-" * 10)
         return x
 
 
@@ -113,53 +109,3 @@ class ResBlock(nn.Module):
             x = layer(x)
             x = x + resid
         return x
-
-
-# class ResBlock(nn.Module):
-#     """Block of sequential convolutional layers with the same kernel size and residual connections
-
-#     Args:
-#         num_convs = number of convblocks inside residual loop
-#         num_resids = number of repeated residual modules
-#     """
-
-#     def __init__(self, channels, kernel_size, dilation):
-#         super(ResBlock, self).__init__()
-#         self.num_convs = len(dilation[0])
-#         self.num_resids = len(dilation)
-#         self.dilation = dilation
-#         self.conv = nn.ModuleList(
-#             [
-#                 nn.Sequential(
-#                     *list(
-#                         nn.Sequential(
-#                             nn.LeakyReLU(),
-#                             nn.Conv1d(
-#                                 channels,
-#                                 channels,
-#                                 kernel_size=kernel_size,
-#                                 dilation=dilation[block_num][conv_num],
-#                                 padding=int(
-#                                     (
-#                                         kernel_size * dilation[block_num][conv_num]
-#                                         - dilation[block_num][conv_num]
-#                                     )
-#                                     / 2
-#                                 ),
-#                             ),
-#                         )
-#                         for conv_num in range(self.num_convs)
-#                     )
-#                 )
-#                 for block_num in range(self.num_resids)
-#             ]
-#         )
-
-#     def forward(self, x):
-#         print(self.dilation)
-#         for m in range(self.num_resids):
-#             resid = x
-#             x = self.conv[m](x)
-#             x = x + resid
-#             print(x.size())
-#         return x

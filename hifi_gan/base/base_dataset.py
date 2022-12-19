@@ -63,16 +63,25 @@ class BaseDataset(Dataset):
 
         # pad audio to get round melspec size
         # print(f" 1 : {audio_tensor.size()}")
+        audio_tensor = self.crop_audio(audio_tensor)
         audio_tensor = self.adjust_audio_len(audio_tensor)
-        # print(f" 2 : {audio_tensor.size()}")
-        # print(
-        #     f'3 : % {audio_tensor.size(1) % self.config_parser["preprocessing"]["hop_length"]}'
-        # )
 
         target_sr = self.config_parser["preprocessing"]["sr"]
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         return audio_tensor
+
+    def crop_audio(self, audio):
+        ss = self.config_parser["preprocessing"]["segment_size"]
+        if audio.size(1) >= ss:
+            max_audio_start = audio.size(1) - ss
+            audio_start = random.randint(0, max_audio_start)
+            audio = audio[:, audio_start : audio_start + ss]
+        else:
+            audio = torch.nn.functional.pad(
+                audio, (0, self.segment_size - audio.size(1)), "constant"
+            )
+        return audio
 
     def adjust_audio_len(self, audio):
         """FIX"""
