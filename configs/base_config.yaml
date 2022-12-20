@@ -65,10 +65,10 @@ loss:
 training:
   device: 'cpu'
   epochs: 100
-  d_learning_rate: 0.00002
+  d_learning_rate: 0.0002
   g_learning_rate: 0.0002
   weight_decay: 0.01
   log_steps: 20
-  save_steps: 600
+  save_steps: 1000
   grad_clip: 10000
-  gamma: 0.99
+  gamma: 0.98

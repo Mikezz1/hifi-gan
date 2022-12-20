@@ -1,6 +1,7 @@
 # init objects - datasets, dataloaders etc
 import argparse
 import yaml
+import numpy as np
 import torch
 from hifi_gan.collate_fn.collate import collate_fn
 from hifi_gan.dataset.lj_speech import LJspeechDataset
@@ -44,6 +45,11 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    SEED = 112
+    torch.manual_seed(SEED)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(SEED)
 
     melspec_transform = MelSpectrogram(config).to(device)
 

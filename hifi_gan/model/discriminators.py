@@ -26,13 +26,14 @@ class MSD(nn.Module):
                 ScaleDiscriminator(use_spectral_norm=False),
             ]
         )
+        self.pools = nn.ModuleList([nn.AvgPool1d(4, 2, 2), nn.AvgPool1d(4, 2, 2)])
 
     def forward(self, x):
         fmaps = []
         outputs = []
         for i, discriminator in enumerate(self.discs):
             if i > 0:
-                x = F.avg_pool1d(x, 2 * i, stride=2, padding=i)
+                x = self.pools[i - 1](x)
             output, fmap = discriminator(x)
             outputs.append(output)
             fmaps.append(fmap)
@@ -76,10 +77,12 @@ class ScaleDiscriminator(nn.Module):
 
     def forward(self, x):
         fmaps = []
+        # print("-----")
         for layer in self.convs:
             x = layer(x)
             fmaps.append(x)
         x = self.out(x)
+        # fmaps.append(x)
         x = torch.flatten(x, 1, -1)
         return x, fmaps
 
@@ -130,53 +133,62 @@ class SubMPD(nn.Module):
         self.period = period
         self.convs = nn.ModuleList()
 
-        # may also need padding
-        self.convs.append(
-            nn.Sequential(
+        self.convs = nn.ModuleList(
+            (
                 weight_norm(
                     nn.Conv2d(
                         in_channels=1,
-                        out_channels=2 ** (5),
+                        out_channels=32,
                         kernel_size=(5, 1),
                         stride=(3, 1),
                         padding=(2, 0),
                     )
                 ),
-                nn.LeakyReLU(),
+                weight_norm(
+                    nn.Conv2d(
+                        in_channels=32,
+                        out_channels=128,
+                        kernel_size=(5, 1),
+                        stride=(3, 1),
+                        padding=(2, 0),
+                    )
+                ),
+                weight_norm(
+                    nn.Conv2d(
+                        in_channels=128,
+                        out_channels=512,
+                        kernel_size=(5, 1),
+                        stride=(3, 1),
+                        padding=(2, 0),
+                    )
+                ),
+                weight_norm(
+                    nn.Conv2d(
+                        in_channels=512,
+                        out_channels=1024,
+                        kernel_size=(5, 1),
+                        stride=(3, 1),
+                        padding=(2, 0),
+                    )
+                ),
+                weight_norm(
+                    nn.Conv2d(
+                        in_channels=1024,
+                        out_channels=1024,
+                        kernel_size=(5, 1),
+                        stride=(3, 1),
+                        padding=(2, 0),
+                    )
+                ),
             )
         )
 
-        # may also need padding
-        for l in range(1, 5):
-            self.convs.append(
-                nn.Sequential(
-                    weight_norm(
-                        nn.Conv2d(
-                            in_channels=2 ** (5 + l - 1),
-                            out_channels=2 ** (5 + l),
-                            kernel_size=(5, 1),
-                            stride=(3, 1),
-                            padding=(2, 0),
-                        )
-                    ),
-                    nn.LeakyReLU(),
-                )
-            )
-
-        self.out = nn.Sequential(
-            weight_norm(
-                nn.Conv2d(
-                    in_channels=512,
-                    out_channels=1024,
-                    kernel_size=(5, 1),
-                    padding=(2, 0),
-                )
-            ),
-            nn.LeakyReLU(),
+        self.out = weight_norm(
             nn.Conv2d(
                 in_channels=1024, out_channels=1, kernel_size=(3, 1), padding=(1, 0)
-            ),
+            )
         )
+
         self.convs.apply(weights_init)
 
     def forward(self, x):
@@ -202,7 +214,9 @@ class SubMPD(nn.Module):
         # After reshape: (B, 1, int(T/p), p)
         for conv in self.convs:
             x = conv(x)
+            x = F.leaky_relu(x)
             features.append(x)
 
         x = self.out(x)
+        # features.append(x)
         return x, features

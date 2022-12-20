@@ -42,37 +42,12 @@ class GeneratorLoss:
             for fmap_layer_f, fmap_layer_r in zip(fmap_fake, fmap_real):
                 feature_loss_msd += l1_loss(fmap_layer_f, fmap_layer_r)
 
-        # for fmap_fake, fmap_real in zip(mpd_fmap_fake, mpd_fmap_real):
-        #     l = torch.mean(
-        #         torch.Tensor(
-        #             [
-        #                 l1_loss(fmap_f, fmap_r)
-        #                 for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
-        #             ]
-        #         )
-        #     )
-        #     feature_loss_mpd += l
-        # feature_loss_mpd = feature_loss_mpd / len(mpd_fmap_fake)
-
         # msd
         for output in msd_out_fake:
             msd_loss += torch.mean((output - 1) ** 2)
 
-        # for fmap_fake, fmap_real in zip(msd_fmap_fake, msd_fmap_real):
-        #     l = torch.mean(
-        #         torch.Tensor(
-        #             [
-        #                 l1_loss(fmap_f, fmap_r)
-        #                 for fmap_f, fmap_r in zip(fmap_fake, fmap_real)
-        #             ]
-        #         )
-        #     )
-        #     feature_loss_msd += l
-
-        # feature_loss_msd = feature_loss_msd / len(msd_fmap_fake)
-
         # mel loss
-        mel_loss = l1_loss(mels_fake, mels_true)
+        mel_loss = l1_loss(mels_fake.squeeze(1), mels_true)
 
         # total loss
         loss = (
@@ -82,7 +57,6 @@ class GeneratorLoss:
             + msd_loss
             + mpd_loss
         )
-        # print(loss, mel_loss, feature_loss_mpd, feature_loss_msd, msd_loss, mpd_loss)
 
         return (
             loss,
@@ -106,15 +80,13 @@ class DiscriminatorLoss:
         mpd_out_real: List[torch.Tensor],
     ):
 
-        msd_loss = torch.Tensor([0]).to(self.device)
-        mpd_loss = torch.Tensor([0]).to(self.device)
+        msd_loss = 0
+        mpd_loss = 0
 
         for output_fake, output_real in zip(mpd_out_fake, mpd_out_real):
             mpd_loss = mpd_loss + torch.mean((output_real - 1) ** 2 + output_fake**2)
 
         for output_fake, output_real in zip(msd_out_fake, msd_out_real):
+            msd_loss = msd_loss + torch.mean((output_real - 1) ** 2 + output_fake**2)
 
-            l = torch.mean((output_real - 1) ** 2 + output_fake**2)
-            msd_loss = msd_loss + l
-
-        return (msd_loss + mpd_loss) / 2
+        return msd_loss + mpd_loss

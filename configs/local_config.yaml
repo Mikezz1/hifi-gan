@@ -17,8 +17,8 @@ preprocessing:
     segment_size: 8192
 
 dataset:
-    bs: 1
-    limit: 1
+    bs: 2
+    limit: 2
     batch_overfit: True
     shuffle: False
     num_workers: 0
@@ -70,5 +70,5 @@ training:
   weight_decay: 0.01
   log_steps: 2
   save_steps: 1000
-  grad_clip: 10000
+  grad_clip: 100000
   gamma: 0.9999

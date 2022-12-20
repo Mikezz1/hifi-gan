@@ -41,6 +41,11 @@ class Trainer:
     def train(
         self,
     ):
+
+        self.MSD.train()
+        self.MPD.train()
+        self.generator.train()
+
         step = 0
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,10 +59,7 @@ class Trainer:
                 wavs = batch["wavs"].to(device)
 
                 self.optimizer_d.zero_grad()
-                fake_wav = self.generator(mels)
-
-                # print(wavs.size(2))
-                # print(fake_wav.size(2))
+                fake_wav = self.generator(mels).detach()
 
                 assert fake_wav.size(2) == wavs.size(2)
 
@@ -69,13 +71,6 @@ class Trainer:
                 mpd_out_real, _ = self.MPD(wavs)  # List(Tensor), List(Tensor)
                 mpd_out_fake, _ = self.MPD(fake_wav)  # List(Tensor), List(Tensor)
 
-                # print("-" * 10)
-                # print(fake_wav.size(), wavs.size())
-                # print(msd_out_fake.size(), msd_out_real.size())
-                # print(mpd_out_fake.size(), mpd_out_real.size())
-                # print("-" * 10)
-
-                # should iterate over msd / mpd outputs, calc loss and add it with given weights
                 d_total_loss = self.discriminator_loss(
                     msd_out_fake,
                     mpd_out_fake,
@@ -83,8 +78,12 @@ class Trainer:
                     mpd_out_real,
                 )
 
-                d_total_loss.backward()
                 # log smth here
+
+                d_total_loss.backward()
+
+                self.optimizer_d.step()
+
                 nn.utils.clip_grad_norm_(
                     self.MPD.parameters(), self.config["training"]["grad_clip"]
                 )
@@ -93,15 +92,13 @@ class Trainer:
                     self.MSD.parameters(), self.config["training"]["grad_clip"]
                 )
 
-                self.optimizer_d.step()
-
                 # move to generator
                 self.optimizer_g.zero_grad()
 
                 fake_wav = self.generator(mels)
 
                 msd_out_fake, msd_fmap_fake = self.MSD(fake_wav)
-                msd_out_real, msd_fmap_real = self.MSD(fake_wav)
+                msd_out_real, msd_fmap_real = self.MSD(wavs)
 
                 mpd_out_fake, mpd_fmap_fake = self.MPD(fake_wav)
                 mpd_out_real, mpd_fmap_real = self.MPD(wavs)
@@ -127,10 +124,10 @@ class Trainer:
                 )
 
                 g_total_loss.backward()
+                self.optimizer_g.step()
                 nn.utils.clip_grad_norm_(
                     self.generator.parameters(), self.config["training"]["grad_clip"]
                 )
-                self.optimizer_g.step()
 
                 if step % self.config["training"]["log_steps"] == 0:
                     grad_norm_g = self.get_grad_norm(self.generator)
@@ -224,14 +221,8 @@ class Trainer:
         )
         return audio
 
-    # def truncate_audio(self, audio):
-    #     """FIX"""
-    #     hl = self.config["preprocessing"]["hop_length"]
-
-    #     tr_len = audio.size(2) % hl
-    #     print(audio.size(2), hl, tr_len)
-    #     audio = audio[:, :, :-tr_len]
-    #     return audio
+    def evaluate(val_loader, generator, MPD, MSD):
+        pass
 
     def save_checkpoint(
         self, generator, MPD, MSD, optimizer_g, optimizer_d, path, model_name, step

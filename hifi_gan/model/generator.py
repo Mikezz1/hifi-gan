@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import List
-import torch.nn
+import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 
 
@@ -43,14 +43,15 @@ class Generator(nn.Module):
         self.upsampling = nn.Sequential(
             *list(
                 nn.Sequential(
+                    nn.LeakyReLU(),
                     self.norm(
                         nn.ConvTranspose1d(
                             self.initial_ch // (2**i),
                             self.initial_ch // (2 ** (i + 1)),
                             kernel_size=k_u[i],
                             stride=k_u[i] // 2,
-                            padding=(k_u[i] - (k_u[i] // 2)) // 2,
-                        )
+                            padding=k_u[i] // 4,
+                        ),
                     ),
                     MRF(
                         kernels,
@@ -66,6 +67,7 @@ class Generator(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = self.upsampling(x)
+        x = F.leaky_relu(x)
         x = self.tanh(self.conv2(x))
         return x
 
@@ -89,10 +91,10 @@ class MRF(nn.Module):
         )
 
     def forward(self, x):
-        output = self.resblocks[0](x)
-        for resblock in self.resblocks[1:]:
+        output = torch.zeros(x.size()).to(x.device)
+        for resblock in self.resblocks:
             output = output + resblock(x)
-        return output / 3
+        return output / len(self.resblocks)
 
 
 class ResBlock(nn.Module):
