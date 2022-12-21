@@ -170,15 +170,15 @@ class SubMPD(nn.Module):
                         padding=(2, 0),
                     )
                 ),
-                # weight_norm(
-                #     nn.Conv2d(
-                #         in_channels=1024,
-                #         out_channels=1024,
-                #         kernel_size=(5, 1),
-                #         stride=(3, 1),
-                #         padding=(2, 0),
-                #     )
-                # ),
+                weight_norm(
+                    nn.Conv2d(
+                        in_channels=1024,
+                        out_channels=1024,
+                        kernel_size=(5, 1),
+                        stride=(3, 1),
+                        padding=(2, 0),
+                    )
+                ),
             )
         )
 

@@ -227,7 +227,9 @@ class Trainer:
 
         self.generator.eval()
         with torch.no_grad():
-            wavs = [self.generator(torch.Tensor(mel)) for mel in test_mels]
+            wavs = [
+                self.generator(torch.Tensor(mel).to(self.device)) for mel in test_mels
+            ]
 
             for i, wav in enumerate(wavs):
                 self._log_audio(wav.squeeze(1), caption=f"test_audio_{i}")
