@@ -22,13 +22,11 @@ class GeneratorLoss:
         mels_fake: torch.Tensor,
     ):
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        loss = torch.Tensor([0]).to(device)
-        mpd_loss = torch.Tensor([0]).to(device)
-        msd_loss = torch.Tensor([0]).to(device)
-        feature_loss_mpd = torch.Tensor([0]).to(device)
-        feature_loss_msd = torch.Tensor([0]).to(device)
+        loss = 0
+        mpd_loss = 0
+        msd_loss = 0
+        feature_loss_mpd = 0
+        feature_loss_msd = 0
 
         # mpd
         for output in mpd_out_fake:
@@ -70,7 +68,7 @@ class GeneratorLoss:
 
 class DiscriminatorLoss:
     def __init__(self):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        pass
 
     def __call__(
         self,

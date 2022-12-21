@@ -10,7 +10,6 @@ from hifi_gan.trainer.trainer import Trainer
 from hifi_gan.model.discriminators import MSD, MPD
 from hifi_gan.model.generator import Generator
 from hifi_gan.model.loss import GeneratorLoss, DiscriminatorLoss
-from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 from hifi_gan.utils.preprocessing import MelSpectrogram
 
@@ -45,7 +44,7 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    SEED = 112
+    SEED = config["base"]["seed"]
     torch.manual_seed(SEED)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
@@ -98,14 +97,6 @@ if __name__ == "__main__":
         eps=1e-9,
     )
 
-    # scheduler_g = OneCycleLR(optimizer_g, **{
-    #     "steps_per_epoch": len(dataloader),
-    #     "epochs": config['training']['epochs'],
-    #     "anneal_strategy": "cos",
-    #     "max_lr": config['training']['g_learning_rate'],
-    #     "pct_start": 0.1
-    # })
-
     scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
         optimizer_g, config["training"]["gamma"]
     )
@@ -114,13 +105,55 @@ if __name__ == "__main__":
         optimizer_d, config["training"]["gamma"]
     )
 
-    # scheduler_d = OneCycleLR(optimizer_d, **{
-    #     "steps_per_epoch": len(dataloader),
-    #     "epochs": config['training']['epochs'],
-    #     "anneal_strategy": "cos",
-    #     "max_lr": config['training']['d_learning_rate'],
-    #     "pct_start": 0.1
-    # })
+    if config["training"]["checkpoint"]:
+
+        # Match the keys of MPD
+        MPD_param_dict = MPD.state_dict()
+        pretrained_dict = torch.load(
+            config["training"]["checkpoint"], map_location=device
+        )["MPD"]
+        pretrained_dict = {
+            k: v for k, v in pretrained_dict.items() if k in MPD_param_dict
+        }
+        MPD_param_dict.update(pretrained_dict)
+        MPD.load_state_dict(MPD_param_dict)
+
+        # # Match the keys of d_optim
+        # doptim_param_dict = optimizer_d.state_dict()
+        # pretrained_dict = torch.load(
+        #     config["training"]["checkpoint"], map_location=device
+        # )["optimizer_d"]
+
+        # pretrained_dict = {
+        #     k: v for k, v in pretrained_dict.items() if k in doptim_param_dict
+        # }
+        # print(pretrained_dict.keys())
+        # doptim_param_dict.update(pretrained_dict)
+        # optimizer_d.load_state_dict(doptim_param_dict)
+
+        MSD.load_state_dict(
+            torch.load(config["training"]["checkpoint"], map_location=device)["MSD"]
+        )
+        # MPD.load_state_dict(
+        #     torch.load(config["training"]["checkpoint"], map_location=device)["MPD"]
+        # )
+        generator.load_state_dict(
+            torch.load(config["training"]["checkpoint"], map_location=device)[
+                "generator"
+            ],
+        )
+
+        # optimizer_d.load_state_dict(
+        #     torch.load(config["training"]["checkpoint"], map_location=device)[
+        #         "optimizer_d"
+        #     ],
+        # )
+
+        optimizer_g.load_state_dict(
+            torch.load(config["training"]["checkpoint"], map_location=device)[
+                "optimizer_g"
+            ],
+        )
 
     logger = WanDBWriter(config)
 
@@ -129,6 +162,10 @@ if __name__ == "__main__":
     )
 
     discriminator_loss = DiscriminatorLoss()
+
+    print(sum(p.numel() for p in MSD.parameters()))
+    print(sum(p.numel() for p in MPD.parameters()))
+    print(sum(p.numel() for p in generator.parameters()))
 
     trainer = Trainer(
         config,
@@ -144,6 +181,7 @@ if __name__ == "__main__":
         logger,
         scheduler_d,
         scheduler_g,
+        device,
     )
 
     trainer.train()

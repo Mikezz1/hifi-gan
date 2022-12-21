@@ -3,18 +3,19 @@ base:
   model_name: "hifi_gan"
   data_dir: "./data/"
   checkpoint_path: "./checkpoints/"
+  seed: 123
   #dirs and other
 
 preprocessing:
-    sr: 22050
-    win_length: 1024
-    hop_length: 256
-    n_fft:  1024
-    f_min:  0
-    f_max: 8000
-    n_mels: 80
-    power: 1.0
-    segment_size: 8192
+  sr: 22050
+  win_length: 1024
+  hop_length: 256
+  n_fft:  1024
+  f_min:  0
+  f_max: 8000
+  n_mels: 80
+  power: 1.0
+  segment_size: 8192
 
 dataset:
   bs: 16
@@ -63,7 +64,7 @@ loss:
 
 
 training:
-  device: 'cpu'
+  device: 'cuda'
   epochs: 100
   d_learning_rate: 0.0002
   g_learning_rate: 0.0002
@@ -72,3 +73,4 @@ training:
   save_steps: 1000
   grad_clip: 10000
   gamma: 0.98
+  checkpoint: null

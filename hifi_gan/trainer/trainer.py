@@ -4,6 +4,7 @@ import PIL
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 import os
+import numpy as np
 from hifi_gan.logger.utils import plot_spectrogram_to_buf
 
 
@@ -23,6 +24,7 @@ class Trainer:
         logger,
         scheduler_d=None,
         scheduler_g=None,
+        device="cpu",
     ):
         self.config = config
         self.dataloader = dataloader
@@ -37,6 +39,7 @@ class Trainer:
         self.logger = logger
         self.scheduler_d = scheduler_d
         self.scheduler_g = scheduler_g
+        self.device = device
 
     def train(
         self,
@@ -48,15 +51,13 @@ class Trainer:
 
         step = 0
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         for epoch in range(self.config["training"]["epochs"]):
             for batch in tqdm(self.dataloader):
                 step += 1
                 self.logger.set_step(step)
 
-                mels = batch["mels"].to(device)
-                wavs = batch["wavs"].to(device)
+                mels = batch["mels"].to(self.device)
+                wavs = batch["wavs"].to(self.device)
 
                 self.optimizer_d.zero_grad()
                 fake_wav = self.generator(mels).detach()
@@ -78,8 +79,6 @@ class Trainer:
                     mpd_out_real,
                 )
 
-                # log smth here
-
                 d_total_loss.backward()
 
                 self.optimizer_d.step()
@@ -92,7 +91,6 @@ class Trainer:
                     self.MSD.parameters(), self.config["training"]["grad_clip"]
                 )
 
-                # move to generator
                 self.optimizer_g.zero_grad()
 
                 fake_wav = self.generator(mels)
@@ -153,6 +151,8 @@ class Trainer:
                         grad_norm_msd,
                         self.scheduler_g.get_last_lr(),
                     )
+
+                    self.inference()
 
                 if step % self.config["training"]["save_steps"] == 0:
                     self.save_checkpoint(
@@ -220,6 +220,19 @@ class Trainer:
             "constant",
         )
         return audio
+
+    def inference(self):
+
+        test_mels = [np.load(f"data/test_spec_{i}.npy") for i in range(3)]
+
+        self.generator.eval()
+        with torch.no_grad():
+            wavs = [self.generator(torch.Tensor(mel)) for mel in test_mels]
+
+            for i, wav in enumerate(wavs):
+                self._log_audio(wav.squeeze(1), caption=f"test_audio_{i}")
+
+        self.generator.train()
 
     def evaluate(val_loader, generator, MPD, MSD):
         pass

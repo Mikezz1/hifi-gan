@@ -131,7 +131,6 @@ class SubMPD(nn.Module):
     def __init__(self, period):
         super(SubMPD, self).__init__()
         self.period = period
-        self.convs = nn.ModuleList()
 
         self.convs = nn.ModuleList(
             (
@@ -171,15 +170,15 @@ class SubMPD(nn.Module):
                         padding=(2, 0),
                     )
                 ),
-                weight_norm(
-                    nn.Conv2d(
-                        in_channels=1024,
-                        out_channels=1024,
-                        kernel_size=(5, 1),
-                        stride=(3, 1),
-                        padding=(2, 0),
-                    )
-                ),
+                # weight_norm(
+                #     nn.Conv2d(
+                #         in_channels=1024,
+                #         out_channels=1024,
+                #         kernel_size=(5, 1),
+                #         stride=(3, 1),
+                #         padding=(2, 0),
+                #     )
+                # ),
             )
         )
 
@@ -218,5 +217,4 @@ class SubMPD(nn.Module):
             features.append(x)
 
         x = self.out(x)
-        # features.append(x)
         return x, features
