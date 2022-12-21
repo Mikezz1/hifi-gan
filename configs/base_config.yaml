@@ -69,8 +69,8 @@ training:
   d_learning_rate: 0.0002
   g_learning_rate: 0.0002
   weight_decay: 0.01
-  log_steps: 20
+  log_steps: 60
   save_steps: 1000
   grad_clip: 10000
   gamma: 0.98
-  checkpoint: null
+  checkpoint: "checkpoints/checkpoint_hifi_gan_2000_large.pth.tar"
