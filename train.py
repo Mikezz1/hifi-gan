@@ -26,13 +26,6 @@ def parse_args():
         help="config file name (without .py)",
     )
 
-    parser.add_argument(
-        "--resume",
-        default="",
-        type=str,
-        help="path to checkpoint (or empty string if  train from scratch)",
-    )
-
     args = parser.parse_args()
     return args
 
@@ -77,10 +70,6 @@ if __name__ == "__main__":
     MSD = MSD.to(device)
     MPD = MPD.to(device)
 
-    # print(sum(p.numel() for p in generator.parameters()))
-    # print(sum(p.numel() for p in MSD.parameters()))
-    # print(sum(p.numel() for p in MPD.parameters()))
-
     optimizer_g = torch.optim.AdamW(
         generator.parameters(),
         lr=config["training"]["g_learning_rate"],
@@ -107,47 +96,23 @@ if __name__ == "__main__":
 
     if config["training"]["checkpoint"]:
 
-        # Match the keys of MPD
-        MPD_param_dict = MPD.state_dict()
-        pretrained_dict = torch.load(
-            config["training"]["checkpoint"], map_location=device
-        )["MPD"]
-        pretrained_dict = {
-            k: v for k, v in pretrained_dict.items() if k in MPD_param_dict
-        }
-        MPD_param_dict.update(pretrained_dict)
-        MPD.load_state_dict(MPD_param_dict)
-
-        # # Match the keys of d_optim
-        # doptim_param_dict = optimizer_d.state_dict()
-        # pretrained_dict = torch.load(
-        #     config["training"]["checkpoint"], map_location=device
-        # )["optimizer_d"]
-
-        # pretrained_dict = {
-        #     k: v for k, v in pretrained_dict.items() if k in doptim_param_dict
-        # }
-        # print(pretrained_dict.keys())
-        # doptim_param_dict.update(pretrained_dict)
-        # optimizer_d.load_state_dict(doptim_param_dict)
-
         MSD.load_state_dict(
             torch.load(config["training"]["checkpoint"], map_location=device)["MSD"]
         )
-        # MPD.load_state_dict(
-        #     torch.load(config["training"]["checkpoint"], map_location=device)["MPD"]
-        # )
+        MPD.load_state_dict(
+            torch.load(config["training"]["checkpoint"], map_location=device)["MPD"]
+        )
         generator.load_state_dict(
             torch.load(config["training"]["checkpoint"], map_location=device)[
                 "generator"
             ],
         )
 
-        # optimizer_d.load_state_dict(
-        #     torch.load(config["training"]["checkpoint"], map_location=device)[
-        #         "optimizer_d"
-        #     ],
-        # )
+        optimizer_d.load_state_dict(
+            torch.load(config["training"]["checkpoint"], map_location=device)[
+                "optimizer_d"
+            ],
+        )
 
         optimizer_g.load_state_dict(
             torch.load(config["training"]["checkpoint"], map_location=device)[
@@ -163,9 +128,9 @@ if __name__ == "__main__":
 
     discriminator_loss = DiscriminatorLoss()
 
-    print(sum(p.numel() for p in MSD.parameters()))
-    print(sum(p.numel() for p in MPD.parameters()))
-    print(sum(p.numel() for p in generator.parameters()))
+    # print(sum(p.numel() for p in MSD.parameters()))
+    # print(sum(p.numel() for p in MPD.parameters()))
+    # print(sum(p.numel() for p in generator.parameters()))
 
     trainer = Trainer(
         config,

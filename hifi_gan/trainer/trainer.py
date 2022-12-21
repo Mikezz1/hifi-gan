@@ -6,6 +6,7 @@ from tqdm import tqdm
 import os
 import numpy as np
 from hifi_gan.logger.utils import plot_spectrogram_to_buf
+from hifi_gan.utils.utils import save_checkpoint
 
 
 class Trainer:
@@ -155,7 +156,7 @@ class Trainer:
                     self.inference()
 
                 if step % self.config["training"]["save_steps"] == 0:
-                    self.save_checkpoint(
+                    save_checkpoint(
                         self.generator,
                         self.MPD,
                         self.MSD,
@@ -209,18 +210,6 @@ class Trainer:
         self._log_audio(audio_true, caption="audio_gt")
         self._log_audio(audio_pred, caption="audio_pred")
 
-    def adjust_audio_len(self, audio):
-        """FIX"""
-        hl = self.config["preprocessing"]["hop_length"]
-
-        pad_len = hl - audio.size(1) % hl
-        audio = torch.nn.functional.pad(
-            audio,
-            (0, pad_len),
-            "constant",
-        )
-        return audio
-
     def inference(self):
 
         test_mels = [np.load(f"data/test_spec_{i}.npy") for i in range(3)]
@@ -235,30 +224,6 @@ class Trainer:
                 self._log_audio(wav.squeeze(1), caption=f"test_audio_{i}")
 
         self.generator.train()
-
-    def evaluate(val_loader, generator, MPD, MSD):
-        pass
-
-    def save_checkpoint(
-        self, generator, MPD, MSD, optimizer_g, optimizer_d, path, model_name, step
-    ):
-        os.makedirs(path, exist_ok=True)
-        torch.save(
-            {
-                "generator": generator.state_dict(),
-                "MPD": MPD.state_dict(),
-                "MSD": MSD.state_dict(),
-                "optimizer_g": optimizer_g.state_dict(),
-                "optimizer_d": optimizer_d.state_dict(),
-            },
-            os.path.join(path, f"checkpoint_{model_name}_{step}.pth.tar"),
-        )
-        print("save model at step %d ..." % step)
-
-    def eval_epoch(
-        self,
-    ):
-        raise NotImplementedError
 
     def _log_spectrogram(self, spectrogram, caption="spectrogram_t"):
         """

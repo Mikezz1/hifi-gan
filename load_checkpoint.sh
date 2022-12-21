@@ -1,0 +1,3 @@
+wget https://bt1nqekkgut4r7f7lifa.yds.yandexcloud.net/lab/v2/bt1nqekkgut4r7f7lifa/files/checkpoint_hifi_gan_17500.pth.tar?_xsrf=2%7C59fcf16d%7C3da20de116937a20d550a4b668b5bdd4%7C1671569699
+mkdir checkpoints
+mv checkpoint_hifi_gan_17500.pth.tar checkpoints/checkpoint_hifi_gan_17500.pth.tar
